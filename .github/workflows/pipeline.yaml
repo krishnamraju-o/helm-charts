@@ -5,8 +5,31 @@ on:
     branches: [master]
 
 jobs:
+  deploy-to-kind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Chart-testing (lint)
+        id: lint
+        uses: HexF/chart-testing-action@v3.0.0
+        with:
+          command: lint
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.2.0
+        with:
+          install_local_path_provisioner: true
+      - name: Install Kubectl
+        run: |
+          ls
+          bash ./scripts/install-kubectl.sh
+
+      - name: Helm Testing
+        run: |
+          bash ./scripts/helm-test.sh ${{ secrets.STAGING_NAMESPACE }} ${{ secrets.RELEASE_NAME }}
+
   deploy-to-staging:
     runs-on: ubuntu-latest
+    needs:  deploy-to-kind
     steps:
       - uses: actions/checkout@v2
       - name: AWS Credentials
@@ -30,4 +53,4 @@ jobs:
           bash ./scripts/install-helm.sh
       - name: Deploy to staging
         run: |
-          bash ./scripts/deploy.sh   ${{ secrets.STAGING_NAMESPACE }}  ${{ secrets.RELEASE_NAME }}
+          bash ./scripts/deploy.sh ${{ secrets.STAGING_NAMESPACE }} ${{ secrets.RELEASE_NAME }}
