@@ -1,0 +1,49 @@
+mysql_svc_name: mysql
+dbname: pages
+
+deployment:
+  containerPort: 8080
+  replicaCount: 1
+
+secrets:
+  SDP: cGFzc3dvcmQ=
+
+service:
+  port: 8080
+  type: NodePort
+  protocol: TCP
+  targetPort: 8080
+
+imagePullPolicy: IfNotPresent
+image:
+  repository: dellcloud/pages
+  tag: monitor
+
+
+config:
+  PAGE_CONTENT: Green-Pages coming from Yellow-World!
+
+env:
+  SPRING_DATASOURCE_URL: jdbc:mysql://pages-mysql/pages?useSSL=false
+  SPRING_DATASOURCE_USERNAME: root
+  DEBUG: true
+  LOGGING_FILE_NAME: helm-ns/logs/app.log
+  LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: debug
+  LOGGING_LEVEL_ROOT: debug
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "*"
+
+
+volumeMounts:
+  mount_path: /helm-ns
+
+readinessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 30
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 30

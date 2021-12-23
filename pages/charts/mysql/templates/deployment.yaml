@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "mysql.fullname" . }}
+  labels:
+    app: {{ include "mysql.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "mysql.fullname" . }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ include "mysql.fullname" . }}
+    spec:
+      containers:
+        - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          name: {{ .Chart.Name }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mysql.fullname" . }}
+                  key: password
+            - name: MYSQL_SERVICE_HOST
+              value: {{ .Values.env.MYSQL_SERVICE_HOST | quote }}
+            - name: MYSQL_SERVICE_PORT
+              value: {{ .Values.env.MYSQL_SERVICE_PORT | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.env.MYSQL_DATABASE | quote }}
+          ports:
+            - containerPort: {{ .Values.deployment.containerPort }}
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: {{ .Values.volumeMounts.mountPath }}
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: {{ include "mysql.fullname" . }}

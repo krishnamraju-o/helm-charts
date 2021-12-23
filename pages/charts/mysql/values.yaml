@@ -1,0 +1,54 @@
+config:
+  spring_datasource_username: root
+
+deployment:
+  containerPort: 3306
+
+secrets:
+  SDP: cGFzc3dvcmQ=
+
+service:
+  port: 3306
+  type: ClusterIP
+  protocol: TCP
+  targetPort: 3306
+
+imagePullPolicy: IfNotPresent
+image:
+  repository: mysql
+  tag: "8.0"
+
+env:
+  MYSQL_SERVICE_HOST: mysql
+  MYSQL_SERVICE_PORT: 3306
+  MYSQL_DATABASE: pages
+
+volumeMounts:
+  mountPath: /var/lib/mysql
+
+job:
+  image:
+    repository: flyway/flyway
+    tag: "6.4.4"
+  env:
+    FLYWAY_URL: jdbc:mysql://pages-mysql/pages
+    FLYWAY_USER: root
+    FLYWAY_PLACEHOLDER_REPLACEMENT: true
+
+pv:
+  capacity:
+    storage: 3Gi
+  accessMode: ReadWriteMany
+  hostPath:
+    path: "/var/lib/mysql/helm-ns"
+pvc:
+  resources:
+    requests:
+      storage: 1Gi
+
+storageClass:
+  provisioner: k8s.io/minikube-hostpath
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+
+mysql_svc_name: mysql

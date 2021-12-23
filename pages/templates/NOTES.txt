@@ -1,0 +1,14 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+helm status {{ .Release.Name }}
+helm get all {{ .Release.Name }}
+
+To access the application, try:
+
+SVC=$(kubectl get svc -l access=external --namespace {{ .Release.Namespace }} -l access=external | awk 'NR==2{print $1}')
+
+kubectl --namespace {{ .Release.Namespace }} port-forward svc/$SVC 8080:8080
